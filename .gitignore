@@ -4,3 +4,4 @@ public/images
 model_old
 firebase.json
 config
+configjwt.js
