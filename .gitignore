@@ -5,3 +5,4 @@ model_old
 firebase.json
 config
 configjwt.js
+ecosystem.config.js

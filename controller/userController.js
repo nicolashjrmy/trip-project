@@ -7,12 +7,16 @@ const { Op } = require("sequelize");
 
 module.exports = {
   async login(req,res){
-    const email = req.body.email.toLowerCase()
-    const password = req.body.password
+    let {email, password} = req.body
     try{
+      if(!email || !password){
+        throw new Error("Email and password are required!")
+      }
+      email = email.toLowerCase()
+
       const login = await db.user.findOne({
         where:{
-          email: email
+          email
         }
       })
       if(!login){
@@ -36,7 +40,7 @@ module.exports = {
       })
 
     }catch(error){
-      return res.status(401).json({message: error.message})
+      return res.status(401).json({message: error.stack})
     } 
   },
 
@@ -70,7 +74,7 @@ module.exports = {
         }
       })
     } catch(error){
-      return res.status(400).json({message: error.message})
+      return res.status(400).json({message: error.stack})
     }
   },
 
