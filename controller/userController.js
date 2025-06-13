@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt')
 const jwt = require("jsonwebtoken");
 const config = require("../configjwt");
 const { Op } = require("sequelize");
+const utils = require("../helper/utils");
 
 module.exports = {
   async login(req,res){
@@ -50,7 +51,10 @@ module.exports = {
       email = email.toLowerCase()
       const check = await db.user.findOne({
         where:{
-          email, username
+          [Op.or]: [
+            {email}, 
+            {username}
+          ]
         },
       })
 
@@ -79,7 +83,7 @@ module.exports = {
   },
 
   async changePassword(req,res){
-    const {password, newPassword} = req.body
+    const {password, repeatPassword, newPassword} = req.body
     const userId = req.login.id
     try{
       const user = await db.user.findOne({
@@ -88,9 +92,14 @@ module.exports = {
         }
       })
 
+      const checkRepeatPassword = password === repeatPassword
+      if(!checkRepeatPassword){
+        throw new Error("Password doesn't match!")
+      }
+
       const check = await bcrypt.compare(password, user.password)
       if(!check){
-        throw new Error("Password's not match!")
+        throw new Error("Current password's incorrect!")
       }
 
       const newPasswordHashed = await bcrypt.hash(newPassword, 10)
@@ -103,5 +112,25 @@ module.exports = {
     }catch(error){
       return res.status(400).json({message: error.message})
     }
+  },
+
+  async getProfile(req,res){
+    const userId = req.login.id
+    try{
+      const user = await db.user.findOne({
+        where: {
+          id: userId
+        },
+        attributes: {
+          exclude: ['password']
+        }
+      })
+
+      return res.status(200).send({message: 'success', data: user})
+
+    }catch(error){
+      return res.status(400).json({message: error.message})  
+    }
   }
+
 }
