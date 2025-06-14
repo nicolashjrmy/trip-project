@@ -2,31 +2,27 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('trips', {
+    await queryInterface.createTable('trip_details', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      participant: {
-        type: Sequelize.TEXT
-      },
-      title: {
-        type: Sequelize.STRING
-      },
-      destination: {
+      name: {
         type: Sequelize.STRING
       },
       desc: {
         type: Sequelize.STRING
       },
+      paidBy: {
+        type: Sequelize.TEXT
+      },
+      participants: {
+        type: Sequelize.TEXT
+      },
       createdBy: {
         type: Sequelize.INTEGER
-      },
-      isArchive:{
-        type: Sequelize.BOOLEAN,
-        defaultValue: false
       },
       createdAt: {
         allowNull: false,
@@ -39,6 +35,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('trips');
+    await queryInterface.dropTable('trip_details');
   }
 };

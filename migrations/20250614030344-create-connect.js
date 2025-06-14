@@ -2,31 +2,18 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('trips', {
+    await queryInterface.createTable('connects', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      participant: {
-        type: Sequelize.TEXT
-      },
-      title: {
-        type: Sequelize.STRING
-      },
-      destination: {
-        type: Sequelize.STRING
-      },
-      desc: {
-        type: Sequelize.STRING
-      },
-      createdBy: {
+      followersId: {
         type: Sequelize.INTEGER
       },
-      isArchive:{
-        type: Sequelize.BOOLEAN,
-        defaultValue: false
+      followingId: {
+        type: Sequelize.INTEGER
       },
       createdAt: {
         allowNull: false,
@@ -39,6 +26,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('trips');
+    await queryInterface.dropTable('connects');
   }
 };
