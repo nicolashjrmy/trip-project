@@ -26,4 +26,30 @@ module.exports = {
 
     return { limit, offset, orderBy, dir };
   },
+
+  async getFollowersCount(id) {
+    let count = await db.connect.count({
+      where: {
+        followingId: id,
+      },
+    });
+    if(!count){
+        count = 0
+    }
+    return count
+  },
+
+  async getFollowingCount(id){
+    let count =  await db.connect.count({
+        where: {
+            followersId: id,
+        }
+    })
+    if(!count){
+        count = 0
+    }
+    return count
+  }
+
+
 }

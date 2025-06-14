@@ -71,7 +71,7 @@ module.exports = {
       })
 
       return res.status(201).json({
-        message: 'Registration success!',
+        message: 'registration success',
         data: {
           email: user.email,
           username: user.username
@@ -107,7 +107,7 @@ module.exports = {
         password: newPasswordHashed
       })
 
-      return res.status(200).json({message: "Password changed successfully!"})
+      return res.status(200).json({message: "password changed successfully!"})
 
     }catch(error){
       return res.status(400).json({message: error.message})
@@ -126,10 +126,93 @@ module.exports = {
         }
       })
 
-      return res.status(200).send({message: 'success', data: user})
+      const followers = await utils.getFollowersCount(userId)
+      const following = await utils.getFollowingCount(userId)
+
+      const data = {
+        followers,
+        following,
+        ...user.dataValues
+      }
+
+      return res.status(200).send({message: 'success', data:data})
 
     }catch(error){
-      return res.status(400).json({message: error.message})  
+      return res.status(400).json({message: error.stack})  
+    }
+  },
+
+  async followUser(req,res){
+    const userId = req.login.id
+    const {id} = req.params
+    try{
+      if(userId === id){
+        throw new Error("You cannot follow yourself!")
+      }
+      
+      const user = await db.user.findOne({
+        where: {
+          id
+        }
+      })
+      if(!user){
+        throw new Error("User not found!")
+      }
+
+      const checkFollow = await db.connect.findOne({
+        where:{
+          followersId: userId,
+          followingId: id
+        }
+      })
+      if(checkFollow){
+        throw new Error("You already follow this user!")
+      }
+
+      await db.connect.create({
+        followersId: userId,
+        followingId: id
+      })
+
+      return res.status(200).json({message: "success following user"})
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  },
+
+  async unfollowUser(req,res){
+    const userId = req.login.id
+    const {id} = req.params
+    try{ 
+      const user = await db.user.findOne({
+        where: {
+          id
+        }
+      })
+      if(!user){
+        throw new Error("User not found!")
+      }
+
+      const checkFollow = await db.connect.findOne({
+        where:{
+          followersId: userId,
+          followingId: id
+        }
+      })
+      if(!checkFollow){
+        throw new Error("You haven't follow this user!")
+      }
+
+      await db.connect.destroy({
+        where: {
+          followersId: userId,
+          followingId: id
+        }
+      })
+      return res.status(200).json({message: "success unfollowing user"})
+
+    }catch(error){
+      return res.status(400).json({message: error.message})
     }
   }
 

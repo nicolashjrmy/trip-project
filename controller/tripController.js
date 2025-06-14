@@ -56,26 +56,23 @@ module.exports = {
 
   async editTrip(req,res){
     const {id} = req.params
-    const {title, destination, desc} = req.body
-    const userId = req.login.id
-
+    const {title, destination, desc} = req.body 
     try{
       const trip = await db.trip.findOne({
         where: {
-          id,
-          createdBy: userId
+          id
         }
       })
 
       if(!trip){
-        throw new Error("Trip not found or you do not have permission to edit this trip")
+        throw new Error("Trip not found!")
       }
 
-      trip.title = title
-      trip.destination = destination
-      trip.desc = desc
-
-      await trip.save()
+      await trip.update({
+        title: title || trip.title,
+        destination: destination || trip.destination,
+        desc: desc || trip.desc,
+      })
 
       return res.status(200).send({ message: "Trip updated successfully!", data: trip})
     }catch(error){

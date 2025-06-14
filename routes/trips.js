@@ -1,10 +1,11 @@
 var express = require('express');
 var router = express.Router();
 
-const tripController = require('../controller/tripController');
 const auth = require('../middleware/auth');
+const tripController = require('../controller/tripController');
 
-router.get('/', auth.isLogin , tripController.getAllTrip)
-router.post('/create', auth.isLogin , tripController.createTrip)
+router.get('/', tripController.getAllTrip)
+router.post('/create', tripController.createTrip)
+router.put('/edit/:id', auth.isOwner, tripController.editTrip)
 
 module.exports = router;
