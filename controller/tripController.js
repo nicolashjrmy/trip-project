@@ -78,6 +78,100 @@ module.exports = {
     }catch(error){
       return res.status(400).json({message: error.message})
     }     
+  },
+
+  async deleteTrip(req,res){
+    const id = req.param.id
+    try{
+      await db.trip.destroy({
+        where: {id}
+      })
+
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  },
+
+  async addTripParticipants(req,res){
+    const id = req.params.id
+    const {userId} = req.body
+    try{
+      if(!Array.isArray(userId) || userId.length === 0){
+        throw new Error('userId must be an array')
+      }
+
+      const trip = await db.trip.findOne({
+        where: {id}
+      })
+      if(!trip){
+        throw new Error('trip not found!')
+      }
+      
+      const users = await db.user.findAll({
+        where: { id: userIdArray },
+        attributes: ['id'],
+      });
+
+      const foundUserIds = users.map((u) => u.id);
+      const notFound = userIdArray.filter((id) => !foundUserIds.includes(id));
+      if (notFound.length > 0) {
+        throw new Error(`The following user(s) do not exist: ${notFound.join(', ')}`);
+      }
+
+      const currentParticipants = JSON.parse(trip.participant || '[]');
+      const alreadyParticipants = userIdArray.filter((id) =>
+        currentParticipants.includes(id)
+      );
+    if (alreadyParticipants.length > 0) {
+      throw new Error(`User(s) already in participants: ${alreadyParticipants.join(', ')}`);
+    }
+
+    const updatedParticipants = [...currentParticipants, ...userIdArray];
+    await trip.update({ participant: JSON.stringify(updatedParticipants) });
+
+    return res.status(200).json({
+      message: 'Participants added successfully!',
+      participants: updatedParticipants,
+    });
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  },
+
+  async joinTripByInvite(req, res) {
+    const { token } = req.params;
+    const userId = req.login.id;
+    try {
+      const decoded = Buffer.from(token, 'base64').toString('ascii');
+      const [tripId] = decoded.split(':');
+
+      const trip = await db.trip.findOne({ 
+        where: { id: tripId } 
+      });
+      if (!trip) throw new Error('Trip not found!');
+
+      let participants = JSON.parse(trip.participant || '[]');
+      if (participants.includes(userId)) {
+        return res.status(400).json({ message: 'You are already a participant!' });
+      }
+      participants.push(userId);
+
+      await trip.update({ participant: JSON.stringify(participants) });
+      return res.status(200).json({ message: 'You have joined the trip!', participants });
+    }catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
+  },
+
+  async generateInviteLink(req, res) {
+    const { id } = req.params;
+    try {
+      const token = Buffer.from(`${id}:${Date.now()}`).toString('base64');
+      const link = `${req.protocol}://${req.get('host')}/trips/join/${token}`;
+      return res.status(200).json({ message: 'Invite link generated!', link });
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
   }
 
   // async createDetailTrip(req, res) {

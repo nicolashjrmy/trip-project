@@ -122,12 +122,40 @@ module.exports = {
           id: userId
         },
         attributes: {
-          exclude: ['password']
+          exclude: ['password', 'updatedAt'], 
         }
       })
 
       const followers = await utils.getFollowersCount(userId)
       const following = await utils.getFollowingCount(userId)
+
+      const data = {
+        followers,
+        following,
+        ...user.dataValues
+      }
+
+      return res.status(200).send({message: 'success', data:data})
+
+    }catch(error){
+      return res.status(400).json({message: error.stack})  
+    }
+  },
+
+  async getProfileById(req,res){
+    const {id} = req.params
+    try{
+      const user = await db.user.findOne({
+        where: {
+          id: id
+        },
+        attributes: {
+          exclude: ['password', 'updatedAt', 'email', 'id'], 
+        }
+      })
+
+      const followers = await utils.getFollowersCount(id)
+      const following = await utils.getFollowingCount(id)
 
       const data = {
         followers,
@@ -214,6 +242,56 @@ module.exports = {
     }catch(error){
       return res.status(400).json({message: error.message})
     }
-  }
+  },
 
+  async getFollowersDetail(req,res){
+    const {id} = req.params
+    try{
+      const followers = await db.connect.findAll({
+        where: {followingId: id},
+        include: [
+        {
+          model: db.user,
+          as: 'followers',
+          attributes: ['id', 'username', 'name']
+        }
+        ],
+        attributes: {
+          exclude: ['followersId', 'followingId', 'id'], 
+        }
+      })
+
+      const followersList = followers.map(f => f.followers);
+
+      return res.status(200).send({message: 'success', data: followersList})
+ 
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  },
+
+  async getFollowingDetail(req,res){
+    const {id} = req.params
+    try{
+      const following = await db.connect.findAll({
+        where: {followersId: id},
+        include: [
+        {
+          model: db.user,
+          as: 'following',
+          attributes: ['id', 'username', 'name']
+        }
+        ],
+        attributes: {
+          exclude: ['followersId', 'followingId', 'id'], 
+        }
+      })
+
+      const followingList = following.map(f => f.following);
+      return res.status(200).send({message: 'success', data: followingList})
+ 
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  }  
 }

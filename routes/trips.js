@@ -7,5 +7,9 @@ const tripController = require('../controller/tripController');
 router.get('/', tripController.getAllTrip)
 router.post('/create', tripController.createTrip)
 router.put('/edit/:id', auth.isOwner, tripController.editTrip)
+router.delete('/delete/:id', auth.isOwner, tripController.deleteTrip)
 
+router.post('/:id/add-participant', tripController.addTripParticipants)
+router.get('/join/:token', tripController.joinTripByInvite);
+router.get('/:id/invite-link', auth.isOwner, tripController.generateInviteLink);
 module.exports = router;
