@@ -18,7 +18,8 @@ module.exports = (sequelize, DataTypes) => {
     title: DataTypes.STRING,
     destination: DataTypes.STRING,
     desc: DataTypes.STRING,
-    createdBy: DataTypes.INTEGER
+    createdBy: DataTypes.INTEGER,
+    isArchive: DataTypes.BOOLEAN
   }, {
     sequelize,
     modelName: 'trip',

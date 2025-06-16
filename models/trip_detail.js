@@ -14,8 +14,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   trip_detail.init({
+    tripId: DataTypes.INTEGER,
     name: DataTypes.STRING,
     desc: DataTypes.STRING,
+    amount: DataTypes.INTEGER,
     paidBy: DataTypes.TEXT,
     participants: DataTypes.TEXT,
     createdBy: DataTypes.INTEGER

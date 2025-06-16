@@ -40,7 +40,8 @@ module.exports = {
           [Op.or]:[
             {createdBy: userId},
             {participant: {[Op.like]: `%${userId}%`}}
-          ]
+          ],
+          isArchive: false
         },
         limit: pagination.limit,
         offset: pagination.offset,
@@ -81,11 +82,13 @@ module.exports = {
   },
 
   async deleteTrip(req,res){
-    const id = req.param.id
+    const id = req.params.id
     try{
       await db.trip.destroy({
         where: {id}
       })
+
+      return res.status(200).send({message: 'success delete trip'})
 
     }catch(error){
       return res.status(400).json({message: error.message})
@@ -172,9 +175,31 @@ module.exports = {
     } catch (error) {
       return res.status(400).json({ message: error.message });
     }
+  },
+
+  async archiveTrip(req,res){
+    const {id} = req.params
+    try{
+      const trip = await db.trip.findOne({
+        where: {id}
+      })
+      if(!trip){
+        throw new Error('trip not found!')
+      }
+
+      const isEmpty = await db.trip_detail.findAll({where: {tripId: id}})
+      if(isEmpty.length === 0){
+        throw new Error('cannot archive empty trips')
+      }
+
+      await trip.update({
+        isArchive: true
+      })
+
+      return res.status(200).send({message: 'success archive trips', data: trip})
+
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
   }
-
-  // async createDetailTrip(req, res) {
-
-  // }
 }
