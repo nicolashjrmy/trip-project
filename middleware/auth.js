@@ -46,5 +46,22 @@ module.exports = {
         }
 
         next();
-    }
+    },
+
+    async isParticipant(req,res,next){
+        const {id} = req.params
+        const userId = req.login.id
+        const trip = await db.trip.findOne({
+            where: {
+                id
+            }
+        })
+
+        const participants = JSON.parse(trip.participant || '[]');
+        if (!participants.includes(userId)) {
+            return res.status(400).send({ message: "Only participants can edit this!" });
+        }
+
+        next();
+    },
 }
