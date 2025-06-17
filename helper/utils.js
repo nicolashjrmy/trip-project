@@ -49,6 +49,10 @@ module.exports = {
         count = 0
     }
     return count
+  },
+
+  splitExpenses(amount, length){
+    return amount / length
   }
 
 
