@@ -4,7 +4,6 @@ const jwt = require("jsonwebtoken");
 const config = require("../configjwt");
 const { Op, or } = require("sequelize");
 const utils = require("../helper/utils");
-const { map } = require('../app');
 
 module.exports = {
   async createTrip(req,res){

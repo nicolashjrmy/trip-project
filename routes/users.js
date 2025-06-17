@@ -3,9 +3,10 @@ var router = express.Router();
 
 const userController = require('../controller/userController');
 
-router.get('/:id', userController.getProfileById)
 
 router.get('/profile', userController.getProfile)
+router.get('/:id', userController.getProfileById)
+
 router.put('/profile/change-password', userController.changePassword)
 router.put('/profile/edit', userController.editProfile)
 
