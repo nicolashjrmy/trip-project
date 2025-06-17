@@ -12,6 +12,8 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       user.hasMany(models.connect, {foreignKey: "followersId"})
       user.hasMany(models.connect, {foreignKey: "followingId"})
+      user.hasMany(models.trip_detail_split, { foreignKey: 'userId'});
+      
     }
   }
   user.init({

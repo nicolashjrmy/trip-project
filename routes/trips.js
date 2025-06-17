@@ -15,4 +15,6 @@ router.post('/:id/add-participant', tripController.addTripParticipants)
 router.get('/join/:token', tripController.joinTripByInvite);
 router.get('/:id/invite-link', auth.isOwner, tripController.generateInviteLink);
 
+router.get('/:id/report', auth.isParticipant, tripController.getReport)
+
 module.exports = router;

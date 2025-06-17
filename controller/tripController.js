@@ -233,5 +233,32 @@ module.exports = {
     }catch(error){
       return res.status(400).json({message: error.message})
     }
+  },
+
+  async getReport(req,res){
+    const {id} = req.params
+    try{
+      const report = await db.trip_detail.findAll({
+        where: {tripId: id},
+        include: [
+          {
+            model: db.trip_detail_split,
+            as: 'details',
+            include:[
+              {
+                model: db.user,
+                as: 'user',
+                attributes: ['name']
+              }
+            ]
+          }
+        ],
+      })
+
+      return res.status(200).send({message: 'success get report', data: report})
+
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
   }
 }

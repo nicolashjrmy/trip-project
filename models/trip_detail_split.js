@@ -10,7 +10,8 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      trip_detail_split.belongsTo(models.trip_detail, {foreignKey: 'detailId'})
+      trip_detail_split.belongsTo(models.user, { foreignKey: 'userId', as: 'user' });
     }
   }
   trip_detail_split.init({
