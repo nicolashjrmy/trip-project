@@ -114,6 +114,29 @@ module.exports = {
     }
   },
 
+  async editProfile(req,res){
+    const {username, email, name} = req.body
+    const userId = req.login.id
+    try{
+      const user = await db.user.findOne({
+        where:{
+          id: userId
+        }
+      })
+
+      await user.update({
+        username: username,
+        email: email,
+        name: name
+      })
+
+      return res.status(200).send({message: 'success edit profile', data: user})
+
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  },
+
   async getProfile(req,res){
     const userId = req.login.id
     try{

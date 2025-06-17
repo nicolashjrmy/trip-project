@@ -49,13 +49,17 @@ module.exports = {
     },
 
     async isParticipant(req,res,next){
-        const {id} = req.params
+        const { id } = req.params
         const userId = req.login.id
         const trip = await db.trip.findOne({
             where: {
                 id
             }
         })
+
+        if(!trip){
+            return res.status(400).send({message: 'Trip is not found!'})
+        }
 
         const participants = JSON.parse(trip.participant || '[]');
         if (!participants.includes(userId)) {

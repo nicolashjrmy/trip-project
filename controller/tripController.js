@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const config = require("../configjwt");
 const { Op, or } = require("sequelize");
 const utils = require("../helper/utils");
+const { map } = require('../app');
 
 module.exports = {
   async createTrip(req,res){
@@ -49,6 +50,37 @@ module.exports = {
       })
 
       return res.status(200).send({message: "success", data: trips})
+
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  },
+
+  async getAllTripParticipant(req,res){
+    const id = req.params.id
+    try{
+      const trip = await db.trip.findOne({
+        where:{
+          id
+        },
+        attributes: ['participant']
+      })
+
+      if(!trip){
+        throw new Error('trip not found!')
+      }
+
+      const participantIds = JSON.parse(trip.participant || '[]');
+
+      const list = await db.user.findAll({
+        where: {id: participantIds},
+        attributes: ['id', 'username', 'name']
+      })
+
+      return res.status(200).send({
+        message: 'success get all trip participant',
+        data: list
+      })
 
     }catch(error){
       return res.status(400).json({message: error.message})
