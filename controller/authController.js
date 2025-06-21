@@ -94,19 +94,35 @@ module.exports = {
     }
   },
 
-  async refreshToken(req, res) {
-    const { refreshToken } = req.body;
+  async logout(req, res) {
+    const { refresh_token } = req.body;
   
     try {
-      if (!refreshToken) {
+      if (refresh_token) {
+        await db.refresh_token.destroy({
+          where: { token: refresh_token }
+        });
+      }
+    
+      return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  },
+
+  async refreshToken(req, res) {
+    const { refresh_token } = req.body;
+  
+    try {
+      if (!refresh_token) {
         throw new Error("Refresh token required");
       }
 
-      const decoded = jwt.verify(refreshToken, config.refreshSecret);
+      const decoded = jwt.verify(refresh_token, config.refreshSecret);
     
       const storedToken = await db.refresh_token.findOne({
         where: { 
-          token: refreshToken,
+          token: refresh_token,
           userId: decoded.id,
           expiresAt: { [Op.gt]: new Date() }
         }
@@ -128,7 +144,7 @@ module.exports = {
     }, config.secret, { expiresIn: '15m' });
 
     return res.status(200).json({
-      new_token: newAccessToken
+      token: newAccessToken
     });
 
   } catch (error) {
