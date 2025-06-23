@@ -55,6 +55,22 @@ module.exports = {
     }
   },
 
+  async getById(req,res){
+    const id = req.params.id
+    try{
+      const trips = await db.trip.findByPk(id)
+
+      if(!trips){
+        throw new Error('No Trips Found!')
+      }
+
+      return res.status(200).send({message: "success", data: trips})
+
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  },  
+
   async getAllTripParticipant(req,res){
     const id = req.params.id
     try{

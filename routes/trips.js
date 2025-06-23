@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 const tripController = require('../controller/tripController');
 
 router.get('/', tripController.getAllTrip)
+router.get('/:id', auth.isParticipant, tripController.getById)
 router.get('/participant/:id', tripController.getAllTripParticipant)
 router.post('/create', tripController.createTrip)
 router.put('/edit/:id', auth.isOwner, tripController.editTrip)
