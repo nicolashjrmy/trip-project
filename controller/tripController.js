@@ -48,7 +48,64 @@ module.exports = {
         order: [[pagination.orderBy, pagination.dir]],
       })
 
-      return res.status(200).send({message: "success", data: trips})
+      if (trips.length === 0) {
+        return res.status(200).send({ message: "success", data: [] })
+      }
+
+      const allUserIds = new Set()
+      trips.forEach(trip => {
+        allUserIds.add(trip.createdBy)
+        if (trip.participant) {
+          try {
+            const participantIds = JSON.parse(trip.participant)
+            if (Array.isArray(participantIds)) {
+              participantIds.forEach(id => allUserIds.add(id))
+            }
+          } catch (error) {
+              console.error('Error parsing participants for trip', trip.id, error)
+          }
+        }
+      })
+
+      const users = await db.user.findAll({
+        where: {
+          id: {
+            [Op.in]: Array.from(allUserIds)
+          }
+        },
+          attributes: ['id', 'username'] 
+      })
+
+      const userMap = new Map()
+      users.forEach(user => {
+        userMap.set(user.id, user.username)
+      })
+
+      const tripsWithParticipants = trips.map(trip => {
+        const tripData = trip.toJSON()
+        let participantNames = []
+
+        if (trip.participant) {
+          try {
+            const participantIds = JSON.parse(trip.participant)
+            if (Array.isArray(participantIds)) {
+              participantNames = participantIds
+              .map(id => userMap.get(id))
+              .filter(username => username) 
+            }
+          } catch (error) {
+            console.error('Error parsing participants for trip', trip.id, error)
+          }
+        }
+            
+        return {
+          ...tripData,
+          participant: participantNames,
+          createdBy: userMap.get(trip.createdBy) || 'Unknown'
+        }
+      })
+
+      return res.status(200).send({ message: "success", data: tripsWithParticipants })      
 
     }catch(error){
       return res.status(400).json({message: error.message})
