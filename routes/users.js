@@ -9,7 +9,8 @@ router.get('/:id', userController.getProfileById)
 
 router.put('/profile/change-password', userController.changePassword)
 router.put('/profile/edit', userController.editProfile)
-
+router.get('/profile/followers', userController.getOwnFollowers)
+router.get('/profile/following', userController.getOwnFollowing)
 
 router.get('/:id/followers', userController.getFollowersDetail)
 router.get('/:id/following', userController.getFollowingDetail)

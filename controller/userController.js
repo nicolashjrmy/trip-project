@@ -92,6 +92,7 @@ module.exports = {
 
   async getProfileById(req,res){
     const {id} = req.params
+    const userId = req.login.id
     try{
       const user = await db.user.findOne({
         where: {
@@ -104,10 +105,22 @@ module.exports = {
 
       const followers = await utils.getFollowersCount(id)
       const following = await utils.getFollowingCount(id)
+      let isFollowing = true
+
+      const checkFollowing = await db.connect.findOne({
+        where:{
+          followingId: id,
+          followersId: userId
+        }
+      })
+      if(!checkFollowing){
+        isFollowing = false
+      }
 
       const data = {
         followers,
         following,
+        isFollowing,
         ...user.dataValues
       }
 
@@ -241,5 +254,55 @@ module.exports = {
     }catch(error){
       return res.status(400).json({message: error.message})
     }
-  }  
+  },
+  async getOwnFollowers(req,res){
+    const id = req.login.id
+    try{
+      const followers = await db.connect.findAll({
+        where: {followingId: id},
+        include: [
+        {
+          model: db.user,
+          as: 'followers',
+          attributes: ['id', 'username', 'name']
+        }
+        ],
+        attributes: {
+          exclude: ['followersId', 'followingId', 'id'], 
+        }
+      })
+
+      const followersList = followers.map(f => f.followers);
+
+      return res.status(200).send({message: 'success', data: followersList})
+ 
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  },
+
+  async getOwnFollowing(req,res){
+    const id = req.login.id
+    try{
+      const following = await db.connect.findAll({
+        where: {followersId: id},
+        include: [
+        {
+          model: db.user,
+          as: 'following',
+          attributes: ['id', 'username', 'name']
+        }
+        ],
+        attributes: {
+          exclude: ['followersId', 'followingId', 'id'], 
+        }
+      })
+
+      const followingList = following.map(f => f.following);
+      return res.status(200).send({message: 'success', data: followingList})
+ 
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  }      
 }
