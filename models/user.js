@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       user.hasMany(models.connect, {foreignKey: "followersId"})
       user.hasMany(models.connect, {foreignKey: "followingId"})
       user.hasMany(models.trip_detail_split, { foreignKey: 'userId'});
-      
+      user.hasMany(models.trip_detail, { foreignKey: 'paidBy'});
     }
   }
   user.init({

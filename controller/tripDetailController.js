@@ -1,3 +1,4 @@
+const { format } = require('morgan')
 const utils = require('../helper/utils')
 const db = require('../models')
 
@@ -78,13 +79,13 @@ module.exports = {
       }
 
       for (const participantId of participantIds) {
-  let paid = participantId == paidBy
+        let paid = participantId == paidBy
 
-  let itemName = name
-  if (splitType === 'custom') {
-    const customSplit = safeCustomSplits.find(split => split.userId === participantId)
-    itemName = customSplit.name
-  }
+        let itemName = name
+        if (splitType === 'custom') {
+          const customSplit = safeCustomSplits.find(split => split.userId === participantId)
+          itemName = customSplit.name
+        }
         
         await db.trip_detail_split.create({
           detailId: detail.id,
@@ -108,10 +109,25 @@ module.exports = {
     const {id} = req.params
     try{
       const detail = await db.trip_detail.findAll({
-        where: {tripId: id}
+        where: {tripId: id},
+        include: [{
+          model: db.user,
+          attributes: ['name']
+        }],
+        raw: true
       })
 
-      return res.status(200).send({message: 'success get detail trip', data: detail})
+      const formattedResponse = detail.map(item => {
+        const participants = JSON.parse(item.participants) || []
+        return{
+          ...item,
+          paidBy: item["user.name"],
+          countParticipant: participants.length,
+          ['user.name']: undefined
+        }
+      })
+
+      return res.status(200).send({message: 'success get detail trip', data: formattedResponse})
 
     }catch(error){
       return res.status(400).json({message: error.stack})

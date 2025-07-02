@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       trip_detail.hasMany(models.trip_detail_split, {foreignKey: "detailId", as: 'details'})
+      trip_detail.belongsTo(models.user, {foreignKey: "paidBy"})
     }
   }
   trip_detail.init({
