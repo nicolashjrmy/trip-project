@@ -53,7 +53,34 @@ module.exports = {
 
   splitExpenses(amount, length){
     return amount / length
+  },
+
+  optimizeTransactions(balances) {
+    const debtors = balances.filter(b => b.net < 0).map(b => ({ ...b }))
+    const creditors = balances.filter(b => b.net > 0).map(b => ({ ...b }))
+
+    const transactions = []
+
+    let i = 0, j = 0
+    while (i < debtors.length && j < creditors.length) {
+      const debtor = debtors[i]
+      const creditor = creditors[j]
+
+      const amount = Math.min(-debtor.net, creditor.net)
+
+      transactions.push({
+        from: debtor.name,
+        to: creditor.name,
+        amount: Math.round(amount)
+      })
+
+      debtor.net += amount
+      creditor.net -= amount
+
+      if (Math.abs(debtor.net) < 0.01) i++
+      if (Math.abs(creditor.net) < 0.01) j++
+    }
+
+    return transactions
   }
-
-
 }

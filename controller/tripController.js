@@ -101,7 +101,8 @@ module.exports = {
         return {
           ...tripData,
           participant: participantNames,
-          createdBy: userMap.get(trip.createdBy) || 'Unknown'
+          createdBy: userMap.get(trip.createdBy) || 'Unknown',
+          createById: userMap.get()
         }
       })
 
@@ -332,5 +333,116 @@ module.exports = {
     }catch(error){
       return res.status(400).json({message: error.message})
     }
+  },
+
+  async completeTrip(){
+    const{id} = req.params
+    try{
+      const trip = await db.trip.findOne({
+        where: id
+      })
+
+      if(trip.isComplete === true){
+        throw new Error('Trip has been completed!')
+      }
+
+      await trip.update({
+        isComplete: true
+      })
+
+      return res.status(200).send({message: 'success completed trip'})
+
+    }catch(error){
+      return res.status(400).json({message: error.message})
+    }
+  },
+
+  async getSettlement(req, res) {
+  const { id } = req.params
+
+  try {
+    const tripDetails = await db.trip_detail.findAll({
+      where: { tripId: id },
+      include: [
+        {
+          model: db.trip_detail_split,
+          as: 'details',
+          include: [
+            {
+              model: db.user,
+              as: 'user',
+              attributes: ['id', 'name']
+            }
+          ]
+        }
+      ],
+      raw: false
+    })
+
+    const userIds = new Set()
+    for (const detail of tripDetails) {
+      userIds.add(detail.paidBy)
+      detail.details.forEach(s => userIds.add(s.userId))
+    }
+
+    const users = await db.user.findAll({
+      where: { id: Array.from(userIds) },
+      attributes: ['id', 'name']
+    })
+    const userMap = Object.fromEntries(users.map(u => [u.id, u.name]))
+
+    const balances = {}
+
+    for (const detail of tripDetails) {
+      const paidBy = detail.paidBy
+      const amount = detail.amount
+      const splits = detail.details
+
+      if (!balances[paidBy]) {
+        balances[paidBy] = {
+          id: paidBy,
+          name: userMap[paidBy] || '',
+          paid: 0,
+          owed: 0,
+          net: 0
+        }
+      }
+      balances[paidBy].paid += amount
+
+      for (const split of splits) {
+        const { userId, owed } = split
+
+        if (!balances[userId]) {
+          balances[userId] = {
+            id: userId,
+            name: userMap[userId] || '',
+            paid: 0,
+            owed: 0,
+            net: 0
+          }
+        }
+
+        balances[userId].owed += owed
+      }
+    }
+
+    for (const id in balances) {
+      const b = balances[id]
+      b.net = b.paid - b.owed
+    }
+
+    const transactions = utils.optimizeTransactions(Object.values(balances))
+
+    return res.status(200).json({
+      message: 'success calculate settlement',
+      balances: Object.values(balances),
+      transactions
+    })
+
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ message: err.message })
   }
+}
+
 }
