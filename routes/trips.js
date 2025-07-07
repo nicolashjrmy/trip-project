@@ -14,6 +14,8 @@ router.put('/complete/:id', auth.isOwner, tripController.completeTrip)
 router.put('/archive/:id', auth.isOwner, tripController.archiveTrip)
 
 router.post('/:id/add-participant', tripController.addTripParticipants)
+router.post('/:id/remove-participant', tripController.removeTripParticipant)
+
 router.get('/join/:token', tripController.joinTripByInvite);
 router.get('/:id/invite-link', auth.isOwner, tripController.generateInviteLink);
 

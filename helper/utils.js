@@ -69,7 +69,9 @@ module.exports = {
       const amount = Math.min(-debtor.net, creditor.net)
 
       transactions.push({
+        fromId: debtor.id,
         from: debtor.name,
+        toId: creditor.id,
         to: creditor.name,
         amount: Math.round(amount)
       })

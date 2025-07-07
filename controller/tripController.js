@@ -216,25 +216,25 @@ module.exports = {
       }
       
       const users = await db.user.findAll({
-        where: { id: userIdArray },
+        where: { id: userId },
         attributes: ['id'],
       });
 
       const foundUserIds = users.map((u) => u.id);
-      const notFound = userIdArray.filter((id) => !foundUserIds.includes(id));
+      const notFound = userId.filter((id) => !foundUserIds.includes(id));
       if (notFound.length > 0) {
         throw new Error(`The following user(s) do not exist: ${notFound.join(', ')}`);
       }
 
       const currentParticipants = JSON.parse(trip.participant || '[]');
-      const alreadyParticipants = userIdArray.filter((id) =>
+      const alreadyParticipants = userId.filter((id) =>
         currentParticipants.includes(id)
       );
     if (alreadyParticipants.length > 0) {
       throw new Error(`User(s) already in participants: ${alreadyParticipants.join(', ')}`);
     }
 
-    const updatedParticipants = [...currentParticipants, ...userIdArray];
+    const updatedParticipants = [...currentParticipants, ...userId];
     await trip.update({ participant: JSON.stringify(updatedParticipants) });
 
     return res.status(200).json({
@@ -242,7 +242,46 @@ module.exports = {
       participants: updatedParticipants,
     });
     }catch(error){
-      return res.status(400).json({message: error.message})
+      return res.status(400).json({message: error.stack})
+    }
+  },
+
+  async removeTripParticipant(req, res) {
+    const id = req.params.id;
+    const { userId } = req.body;
+
+    try {
+      if (!Array.isArray(userId) || userId.length === 0) {
+        throw new Error('userId must be a non-empty array');
+      }
+
+      const trip = await db.trip.findOne({
+        where: { id }
+      });
+
+      if (!trip) {
+        throw new Error('Trip not found!');
+      }
+
+      const currentParticipants = JSON.parse(trip.participant || '[]');
+
+      const notInTrip = userId.filter(uid => !currentParticipants.includes(uid));
+      if (notInTrip.length > 0) {
+        throw new Error(`The following user(s) are not in the trip: ${notInTrip.join(', ')}`);
+      }
+
+      const updatedParticipants = currentParticipants.filter(
+        uid => !userId.includes(uid)
+      );
+
+      await trip.update({ participant: JSON.stringify(updatedParticipants) });
+
+      return res.status(200).json({
+        message: 'Participants removed successfully!',
+        participants: updatedParticipants,
+      });
+    } catch (error) {
+      return res.status(400).json({ message: error.stack });
     }
   },
 
@@ -335,12 +374,16 @@ module.exports = {
     }
   },
 
-  async completeTrip(){
+  async completeTrip(req,res){
     const{id} = req.params
     try{
       const trip = await db.trip.findOne({
-        where: id
+        where: {id}
       })
+
+      if(!trip){
+        throw new Error('Trip not found!')
+      }
 
       if(trip.isComplete === true){
         throw new Error('Trip has been completed!')
