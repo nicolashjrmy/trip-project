@@ -52,49 +52,58 @@ module.exports = {
         participantIds.forEach(participantId => {
           splitAmounts[participantId] = amountOwed
         })
-      } else if (splitType === 'custom') {
+      } 
+      if (splitType === 'custom') {
         participantIds.forEach(participantId => {
           splitAmounts[participantId] = 0
         })
 
         if (safeAdditionalFees.length > 0) {
-          const additionalFeeTotal = safeAdditionalFees.reduce((sum, fee) => sum + fee.amount, 0)
-          const additionalFeePerPerson = additionalFeeTotal / participantIds.length
-      
+          const additionalFeeTotal = safeAdditionalFees.reduce((sum, fee) => sum + fee.amount, 0);
+          const additionalFeePerPerson = additionalFeeTotal / participantIds.length;
           participantIds.forEach(participantId => {
-            splitAmounts[participantId] += additionalFeePerPerson
-          })
+            splitAmounts[participantId] += additionalFeePerPerson;
+          });
         }
 
         safeCustomSplits.forEach(split => {
-          if (participantIds.includes(split.userId)) {
-            splitAmounts[split.userId] += split.amount
-          }
-        })
+          const userIds = Array.isArray(split.userId) ? split.userId : [split.userId];
+          const perUserAmount = split.amount / userIds.length;
+          userIds.forEach(uid => {
+            if (participantIds.includes(uid)) {
+              splitAmounts[uid] += perUserAmount;
+            }
+          });
+        });
 
-        const totalSplitAmount = Object.values(splitAmounts).reduce((sum, amount) => sum + amount, 0)
+        const totalSplitAmount = Object.values(splitAmounts).reduce((sum, amount) => sum + amount, 0);
         if (Math.abs(totalSplitAmount - amount) > 0.01) {
-          throw new Error(`Split amounts don't match total. Expected: ${amount}, Got: ${totalSplitAmount}`)
+          throw new Error(`Split amounts don't match total. Expected: ${amount}, Got: ${totalSplitAmount}`);
         }
       }
 
-      for (const participantId of participantIds) {
-        let paid = participantId == paidBy
+for (const participantId of participantIds) {
+  let paid = participantId == paidBy;
+  
+  // Find all items this participant owes for
+  const participantItems = safeCustomSplits.filter(split => {
+    const userIds = Array.isArray(split.userId) ? split.userId : [split.userId];
+    return userIds.includes(participantId);
+  });
+  
+  let itemName = name;
+  if (splitType === 'custom' && participantItems.length > 0) {
+    itemName = participantItems.map(item => item.name).join(', ');
+  }
 
-        let itemName = name
-        if (splitType === 'custom') {
-          const customSplit = safeCustomSplits.find(split => split.userId === participantId)
-          itemName = customSplit.name
-        }
-        
-        await db.trip_detail_split.create({
-          detailId: detail.id,
-          userId: participantId,
-          owed: splitAmounts[participantId] || 0,
-          isPaid: paid,
-          item: itemName
-        }, { transaction: t })
-      }
+  await db.trip_detail_split.create({
+    detailId: detail.id,
+    userId: participantId,
+    owed: splitAmounts[participantId] || 0,
+    isPaid: paid,
+    item: itemName
+  }, { transaction: t });
+}
 
       await t.commit()
       return res.status(200).send({ message: 'success create trip detail', data: detail })
